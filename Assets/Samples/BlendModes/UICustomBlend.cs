@@ -36,6 +36,7 @@ namespace Applibot
             // keywordを全てoffに
             material.enabledKeywords = new LocalKeyword[] { };
 
+            // 指定されたenumによってblend構文のキーワードを変更している
             switch (_blendMode)
             {
                 case MyCustomBlendMode.Normal: // 通常 (プリマルチプライドの透明)

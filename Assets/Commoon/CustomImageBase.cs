@@ -9,10 +9,12 @@ using UnityEngine.UI;
 
 namespace Applibot
 {
+    // このクラスを継承していると、自動的にインスタンスが生成される
     [ExecuteAlways]
     [RequireComponent(typeof(Graphic))]
     public class CustomImageBase : MonoBehaviour, IMaterialModifier
     {
+        // UIのImage関係の基底クラスで2DTextureやmaterialの情報が定義されている
         [NonSerialized] private Graphic _graphic;
         protected Material material;
 

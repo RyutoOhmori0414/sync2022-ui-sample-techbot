@@ -89,8 +89,12 @@ Shader "Applibot/UI/NormalDissolve"
             float _UIMaskSoftnessX;
             float _UIMaskSoftnessY;
 
+            // C#の方から値を設定している変数群
+            // ディゾルブの値を示したTexture
             sampler2D _DissolveTex;
+            // 境目のカラーの太さ
             float _DissolveRange;
+            // DissolveTexのどの値まで描画するか
             float _DissolveAmount;
             float3 _GlowColor;
 
@@ -99,6 +103,7 @@ Shader "Applibot/UI/NormalDissolve"
                 v2f OUT;
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
+                // 頂点の変換
                 float4 vPosition = UnityObjectToClipPos(v.vertex);
                 OUT.worldPosition = v.vertex;
                 OUT.vertex = vPosition;
@@ -119,7 +124,7 @@ Shader "Applibot/UI/NormalDissolve"
             float remap(float value, float inputMin, float inputMax, float outputMin, float outputMax)
             {
                 return (value - inputMin) * ((outputMax - outputMin) / (inputMax - inputMin)) + outputMin;
-            }
+            } // inとoutの比率を調整して出力している
 
             fixed4 frag(v2f IN) : SV_Target
             {
@@ -141,12 +146,15 @@ Shader "Applibot/UI/NormalDissolve"
                 dissolveTexAlpha -= 0.001;
 
                 // 最小値・最大値の調整
+                // 境目を作るためにわざと最小値をマイナスディゾルブにしている
                 _DissolveAmount = remap(_DissolveAmount, 0, 1, -_DissolveRange, 1);
+                // 値がAmountとRangeの合計以下なら指定の色にする
                 if (dissolveTexAlpha < _DissolveAmount + _DissolveRange)
                 {
                     color.rgb += _GlowColor;
                 }
-
+                
+                // Amount以下なら見えなくする
                 if (dissolveTexAlpha < _DissolveAmount)
                 {
                     color.a = 0;

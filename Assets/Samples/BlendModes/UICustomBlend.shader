@@ -52,7 +52,9 @@ Shader "Applibot/UI/CustomBlend"
         Lighting Off
         ZWrite Off
         ZTest [unity_GUIZTestMode]
-        
+        // C#のスクリプト上からブレンドのタイプを変更している
+        // SrcFactorがこのフラグメントシェーダで書き込もうとしている色で
+        // DstFactorが元から書き込まれている色です
         Blend [_SrcFactor] [_DstFactor]
         BlendOp [_BlendOp]
                 

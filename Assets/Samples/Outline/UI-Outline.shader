@@ -115,19 +115,24 @@ Shader "Applibot/UI/Outline"
                 return OUT;
             }
 
+            // RGBを輝度に変換している
             half luminance(float4 c)
             {
+                // 引数の色の各要素に定数を乗算し、加算して算出している
                 half value = c.r * 0.298912 + c.g * 0.586611 + c.b * 0.114478;
                 return value * c.a;
             }
-
+            
+            // ソーベルフィルタ
             fixed4 sobel(v2f IN)
             {
                 float w = _MainTex_TexelSize.z;
                 float h = _MainTex_TexelSize.w;
+                // 画像に対する1Pixelの大きさ
                 float dx = 1 / w;
                 float dy = 1 / h;
                 
+                // 算出する画素の周り3*3を求める
                 half4 c00rgba = tex2D(_MainTex, IN.texcoord + half2(-dx, -dy));
                 half c00 = luminance(c00rgba);
 
@@ -151,17 +156,26 @@ Shader "Applibot/UI/Outline"
 
                 half4 c22rgba = tex2D(_MainTex, IN.texcoord + half2(dx, dy));
                 half c22 = luminance(c22rgba);
-
+                
+                // 周りのPixelにカーネルを乗算し、全て足すここで輝度の差を出す。
+                // 畳み込み演算
+                // 縦の重要度を踏まえて算出している
                 half sxColor = c00 * -1.0 + c10 * -2.0 + c20 * -1.0 + c02 + c12 * 2.0 + c22;
+                // 横の重要度を踏まえて算出している
                 half syColor = c00 * -1.0 + c01 * -2.0 + c02 * -1.0 + c20 + c21 * 2.0 + c22;
-
+    
+                // アルファ値も同じように算出する
                 half sxAlpha = c00rgba.a * -1.0 + c10rgba.a * -2.0 + c20rgba.a * -1.0 + c02rgba.a + c12rgba.a * 2.0 +
                     c22rgba.a;
                 half syAlpha = c00rgba.a * -1.0 + c01rgba.a * -2.0 + c02rgba.a * -1.0 + c20rgba.a + c21rgba.a * 2.0 +
                     c22rgba.a;
-
+                
+                // 二乗和平方根
+                // 縦横両方向の輪郭画像の画素値を計算している
+                // おそらくabsの中身でsqrtを求めているからだと思われます
                 half outlineRGB = sqrt(sxColor * sxColor + syColor * syColor);
                 half outlineAlpha = sqrt(sxAlpha * sxAlpha + syAlpha * syAlpha);
+                
                 half outline = max(outlineRGB, outlineAlpha);
                 outline = saturate(outline);
                 

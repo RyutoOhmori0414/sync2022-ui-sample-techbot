@@ -52,6 +52,7 @@ namespace Applibot
             material.SetInt(_SrcFactor, (int)BlendMode.One);
             material.SetInt(_DstFactor, (int)BlendMode.Zero);
 
+            // TryGetComponentは引数に指定したコンポーネントがAddされているかを確認できる
             if (TryGetComponent(out RawImage rawImage))
             {
                 Texture mainTexture = graphic.mainTexture;
