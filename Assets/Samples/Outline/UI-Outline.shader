@@ -9,6 +9,8 @@ Shader "Applibot/UI/Outline"
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
+        _scale ("scale", Float) = 1
+        
         _Color ("Tint", Color) = (1,1,1,1)
 
         _StencilComp ("Stencil Comparison", Float) = 8
@@ -89,6 +91,8 @@ Shader "Applibot/UI/Outline"
             float _UIMaskSoftnessX;
             float _UIMaskSoftnessY;
 
+            float2 _scaleFactor;
+
             // custom properties
             float4 _MainTex_TexelSize;
             float4 _OutlineColor;
@@ -115,24 +119,18 @@ Shader "Applibot/UI/Outline"
                 return OUT;
             }
 
-            // RGB‚ğ‹P“x‚É•ÏŠ·‚µ‚Ä‚¢‚é
             half luminance(float4 c)
             {
-                // ˆø”‚ÌF‚ÌŠe—v‘f‚É’è”‚ğæZ‚µA‰ÁZ‚µ‚ÄZo‚µ‚Ä‚¢‚é
                 half value = c.r * 0.298912 + c.g * 0.586611 + c.b * 0.114478;
                 return value * c.a;
             }
-            
-            // ƒ\[ƒxƒ‹ƒtƒBƒ‹ƒ^
+
             fixed4 sobel(v2f IN)
             {
-                float w = _MainTex_TexelSize.z;
-                float h = _MainTex_TexelSize.w;
-                // ‰æ‘œ‚É‘Î‚·‚é1Pixel‚Ì‘å‚«‚³
-                float dx = 1 / w;
-                float dy = 1 / h;
+                // uvåº§æ¨™ã§ã®1pxã¯_MainTex_TexelSize.xyã€‚uv atlasã§ã‚ã£ã¦ã‚‚ã“ã®å˜ä½ã¯å¤‰ã‚ã‚‰ãªã„
+                float dx = _MainTex_TexelSize.x * _scaleFactor.x;
+                float dy = _MainTex_TexelSize.y * _scaleFactor.y;
                 
-                // Zo‚·‚é‰æ‘f‚Ìü‚è3*3‚ğ‹‚ß‚é
                 half4 c00rgba = tex2D(_MainTex, IN.texcoord + half2(-dx, -dy));
                 half c00 = luminance(c00rgba);
 
@@ -156,26 +154,17 @@ Shader "Applibot/UI/Outline"
 
                 half4 c22rgba = tex2D(_MainTex, IN.texcoord + half2(dx, dy));
                 half c22 = luminance(c22rgba);
-                
-                // ü‚è‚ÌPixel‚ÉƒJ[ƒlƒ‹‚ğæZ‚µA‘S‚Ä‘«‚·‚±‚±‚Å‹P“x‚Ì·‚ğo‚·B
-                // ô‚İ‚İ‰‰Z
-                // c‚Ìd—v“x‚ğ“¥‚Ü‚¦‚ÄZo‚µ‚Ä‚¢‚é
+
                 half sxColor = c00 * -1.0 + c10 * -2.0 + c20 * -1.0 + c02 + c12 * 2.0 + c22;
-                // ‰¡‚Ìd—v“x‚ğ“¥‚Ü‚¦‚ÄZo‚µ‚Ä‚¢‚é
                 half syColor = c00 * -1.0 + c01 * -2.0 + c02 * -1.0 + c20 + c21 * 2.0 + c22;
-    
-                // ƒAƒ‹ƒtƒ@’l‚à“¯‚¶‚æ‚¤‚ÉZo‚·‚é
+
                 half sxAlpha = c00rgba.a * -1.0 + c10rgba.a * -2.0 + c20rgba.a * -1.0 + c02rgba.a + c12rgba.a * 2.0 +
                     c22rgba.a;
                 half syAlpha = c00rgba.a * -1.0 + c01rgba.a * -2.0 + c02rgba.a * -1.0 + c20rgba.a + c21rgba.a * 2.0 +
                     c22rgba.a;
-                
-                // “ñæ˜a•½•ûª
-                // c‰¡—¼•ûŒü‚Ì—ÖŠs‰æ‘œ‚Ì‰æ‘f’l‚ğŒvZ‚µ‚Ä‚¢‚é
-                // ‚¨‚»‚ç‚­abs‚Ì’†g‚Åsqrt‚ğ‹‚ß‚Ä‚¢‚é‚©‚ç‚¾‚Æv‚í‚ê‚Ü‚·
+
                 half outlineRGB = sqrt(sxColor * sxColor + syColor * syColor);
                 half outlineAlpha = sqrt(sxAlpha * sxAlpha + syAlpha * syAlpha);
-                
                 half outline = max(outlineRGB, outlineAlpha);
                 outline = saturate(outline);
                 
@@ -184,7 +173,7 @@ Shader "Applibot/UI/Outline"
             }
            
 
-            fixed4 frag(v2f IN) : SV_Target
+            half4 frag(v2f IN) : SV_Target
             {
                 half4 color = sobel(IN);
 
